@@ -1,8 +1,8 @@
-// ==========================================
+// ======================================================
 // DRUGSCLINICAL ENGINE - POINT-OF-CARE CORE
-// ==========================================
+// ======================================================
 
-// Base de datos clínica ampliada (extensible mediante APIs externas)
+// Base de datos clínica ampliada
 const CLINICAL_DATABASE = [
   { id: '1', name: 'Warfarina 5mg', category: 'fármaco', type: 'pill', detail: 'Anticoagulante oral' },
   { id: '2', name: 'Aspirina 100mg', category: 'fármaco', type: 'pill', detail: 'Antiagregante plaquetario' },
@@ -11,7 +11,18 @@ const CLINICAL_DATABASE = [
   { id: '5', name: 'eGFR < 30 mL/min', category: 'condicion', type: 'activity', detail: 'Insuficiencia renal severa' },
   { id: '6', name: 'Furosemida', category: 'fármaco', type: 'pill', detail: 'Diurético de asa' },
   { id: '7', name: 'Midazolam', category: 'fármaco', type: 'pill', detail: 'Benzodiacepina' },
-  { id: '8', name: 'Jugo de Toronja', category: 'nutrimento', type: 'apple', detail: 'Inhibidor intestinal CYP3A4' }
+  { id: '8', name: 'Omeprazol', category: 'fármaco', type: 'pill', detail: 'Inhibidor de la bomba de protones' },
+  { id: '9', name: 'Levotiroxina', category: 'fármaco', type: 'pill', detail: 'Hormona tiroidea' }
+];
+
+// Estado global de la prescripción activa
+let activeItems = [
+  'Warfarina 5mg',
+  'Hierba de San Juan',
+  'Set Infusión PVC',
+  'eGFR < 30 mL/min',
+  'Omeprazol',
+  'Levotiroxina'
 ];
 
 // Matriz multidimensional de reglas interactivas
@@ -44,223 +55,177 @@ const INTERACTION_RULES = [
     badge: 'Adsorción en Paredes',
     mechanism: 'El polímero de PVC interactúa químicamente con lipofílicos reduciendo la concentración activa.',
     consequence: 'Disminución de la dosis efectiva entregada al paciente.',
-    action: 'Utilizar líneas de infusión libres de PVC (Polietileno/Poliolefina).'
+    action: 'Usar tubuladuras/sets libres de PVC (Polietileno o Poliolefina).'
   },
   {
-    pair: ['Furosemida', 'Midazolam'],
-    severity: 'danger',
-    title: 'Furosemida + Midazolam (Y-Site)',
-    category: 'Incompatibilidad Y-Site',
-    badge: 'Precipitación Inmediata',
-    mechanism: 'Incompatibilidad física en solución por alteración brusca del pH.',
-    consequence: 'Formación de microcristales e incompatibilidad en la vía venosa.',
-    action: 'Lavar vía venosa con Solución Salina 0.9% entre administraciones o utilizar luces independientes.'
+    pair: ['Omeprazol', 'Levotiroxina'],
+    severity: 'warning',
+    title: 'Omeprazol + Levotiroxina',
+    category: 'Interacción Fármaco-Fármaco',
+    badge: 'Reducción de Absorción',
+    mechanism: 'La supresión del ácido gástrico producida por el IBP disminuye la disolución y absorción de la levotiroxina.',
+    consequence: 'Posible elevación de TSH y control subóptimo del hipotiroidismo.',
+    action: 'Separar la toma de ambos medicamentos al menos 4 horas o ajustar la dosis de hormona tiroidea.'
   }
 ];
 
-// Estado global dinámico
-let activeItems = [
-  { id: '1', name: 'Warfarina 5mg', type: 'pill' },
-  { id: '3', name: 'Hierba de San Juan', type: 'leaf' },
-  { id: '4', name: 'Set Infusión PVC', type: 'syringe' },
-  { id: '5', name: 'eGFR < 30 mL/min', type: 'activity' }
+// Reglas de incompatibilidad Y-Site (Línea IV)
+const Y_SITE_RULES = [
+  {
+    pair: ['Furosemida', 'Midazolam'],
+    status: 'Incompatible',
+    detail: 'Precipitación inmediata observada en infusión continua.'
+  }
 ];
 
-// Event Listeners y arranque
+// ======================================================
+// EVENTOS Y LÓGICA DE INTERFAZ
+// ======================================================
+
 document.addEventListener('DOMContentLoaded', () => {
-  const searchInput = document.getElementById('searchInput');
-  const searchResults = document.getElementById('searchResults');
-  const addBtn = document.getElementById('addBtn');
-
-  // Búsqueda en tiempo real
-  searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    if (!query) {
-      searchResults.classList.add('hidden');
-      return;
-    }
-
-    const filtered = CLINICAL_DATABASE.filter(item => 
-      item.name.toLowerCase().includes(query) || item.detail.toLowerCase().includes(query)
-    );
-
-    renderSearchResults(filtered);
-  });
-
-  // Botón agregar manual
-  addBtn.addEventListener('click', () => {
-    const val = searchInput.value.trim();
-    if (val) {
-      addItem({ id: Date.now().toString(), name: val, type: 'pill' });
-      searchInput.value = '';
-      searchResults.classList.add('hidden');
-    }
-  });
-
-  // Ocultar dropdown al hacer click fuera
-  document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-      searchResults.classList.add('hidden');
-    }
-  });
-
-  // Carga inicial
   renderActivePills();
   evaluateInteractions();
-});
 
-// Renderizar desplegable de autocompletado
-function renderSearchResults(results) {
-  const container = document.getElementById('searchResults');
-  container.innerHTML = '';
+  const addBtn = document.querySelector('button:has(i[data-lucide="plus"]), button:contains("+")') || document.querySelector('button.bg-gradient-to-r');
+  const searchInput = document.querySelector('input[placeholder*="Añade Fármaco"]');
 
-  if (results.length === 0) {
-    container.innerHTML = `<div class="p-3 text-xs text-slate-400">No se encontraron coincidencias clínicas.</div>`;
-  } else {
-    results.forEach(item => {
-      const div = document.createElement('div');
-      div.className = 'p-3 hover:bg-clinical-card cursor-pointer border-b border-clinical-border/50 flex items-center justify-between text-xs transition';
-      div.innerHTML = `
-        <div class="flex items-center gap-2">
-          <i data-lucide="${item.type}" class="w-4 h-4 text-cyan-400"></i>
-          <div>
-            <span class="font-bold text-white block">${item.name}</span>
-            <span class="text-[10px] text-slate-400 font-mono">${item.detail}</span>
-          </div>
-        </div>
-        <span class="text-[10px] bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded uppercase font-mono">${item.category}</span>
-      `;
-      div.onclick = () => {
-        addItem(item);
-        document.getElementById('searchInput').value = '';
-        container.classList.add('hidden');
-      };
-      container.appendChild(div);
+  if (addBtn && searchInput) {
+    addBtn.addEventListener('click', () => {
+      const value = searchInput.value.trim();
+      if (value && !activeItems.includes(value)) {
+        activeItems.push(value);
+        searchInput.value = '';
+        renderActivePills();
+        evaluateInteractions();
+      }
+    });
+
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        addBtn.click();
+      }
     });
   }
+});
 
-  container.classList.remove('hidden');
-  lucide.createIcons();
-}
-
-// Agregar item
-function addItem(item) {
-  if (!activeItems.some(i => i.name.toLowerCase() === item.name.toLowerCase())) {
-    activeItems.push(item);
-    renderActivePills();
-    evaluateInteractions();
-  }
-}
-
-// Remover item
-function removeItem(name) {
-  activeItems = activeItems.filter(i => i.name !== name);
-  renderActivePills();
-  evaluateInteractions();
-}
-
-// Renderizar las Pills superiores
+// Renderizar Pills Activas
 function renderActivePills() {
-  const container = document.getElementById('activePillsContainer');
-  container.innerHTML = '<span class="text-xs text-slate-400 uppercase tracking-wider font-mono mr-1">Evaluando:</span>';
+  const container = document.querySelector('.max-w-3xl.mx-auto.mt-4.flex');
+  if (!container) return;
 
-  activeItems.forEach(item => {
+  // Preservar la etiqueta "EVALUANDO:"
+  container.innerHTML = `<span class="text-xs text-slate-400 uppercase tracking-wider font-mono mr-1">Evaluando:</span>`;
+
+  activeItems.forEach((item, index) => {
     const pill = document.createElement('span');
-    pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-clinical-bg border border-cyan-500/30 text-cyan-300 text-xs font-semibold';
+    pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-clinical-bg border border-cyan-500/30 text-cyan-300 text-xs font-semibold animate-fade-in';
     pill.innerHTML = `
-      <i data-lucide="${item.type || 'pill'}" class="w-3.5 h-3.5 text-cyan-400"></i>
-      <span>${item.name}</span>
-      <button onclick="removeItem('${item.name}')" class="hover:text-white ml-1"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+      <i data-lucide="pill" class="w-3.5 h-3.5 text-cyan-400"></i>
+      <span>${item}</span>
+      <button onclick="removePill(${index})" class="hover:text-white ml-1 text-slate-400">
+        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      </button>
     `;
     container.appendChild(pill);
   });
 
-  lucide.createIcons();
+  if (window.lucide) {
+    lucide.createIcons();
+  }
 }
 
-// Motor de Evaluación de Interacciones
-function evaluateInteractions() {
-  const activeNames = activeItems.map(i => i.name);
-  const matchedRules = [];
+// Quitar elemento
+function removePill(index) {
+  activeItems.splice(index, 1);
+  renderActivePills();
+  evaluateInteractions();
+}
 
+// Evaluar Matriz de Interacciones
+function evaluateInteractions() {
+  const detectedAlerts = [];
+  
   INTERACTION_RULES.forEach(rule => {
-    const match = rule.pair.every(p => activeNames.includes(p));
-    if (match) matchedRules.push(rule);
+    const [itemA, itemB] = rule.pair;
+    if (activeItems.includes(itemA) && activeItems.includes(itemB)) {
+      detectedAlerts.push(rule);
+    }
   });
 
-  renderDiagnostics(matchedRules);
-  renderAlertCards(matchedRules);
+  renderAlerts(detectedAlerts);
+  updateCounters(detectedAlerts);
 }
 
-// Actualizar panel izquierdo
-function renderDiagnostics(matches) {
-  const highRiskCount = matches.filter(m => m.severity === 'danger').length;
-  const modRiskCount = matches.filter(m => m.severity === 'warning').length;
+// Renderizar tarjetas de alertas dinámicamente
+function renderAlerts(alerts) {
+  const alertContainer = document.querySelector('.lg\\:col-span-2');
+  if (!alertContainer) return;
 
-  document.getElementById('highRiskCount').textContent = highRiskCount;
-  document.getElementById('modRiskCount').textContent = modRiskCount;
-  document.getElementById('safeCount').textContent = Math.max(0, activeItems.length - (highRiskCount + modRiskCount));
-}
-
-// Renderizar Alertas Clínicas
-function renderAlertCards(matches) {
-  const container = document.getElementById('alertsContainer');
-  container.innerHTML = '';
-
-  if (matches.length === 0) {
-    container.innerHTML = `
+  if (alerts.length === 0) {
+    alertContainer.innerHTML = `
       <div class="bg-clinical-card border border-emerald-500/30 rounded-2xl p-8 text-center space-y-3">
-        <i data-lucide="check-circle" class="w-12 h-12 text-emerald-400 mx-auto"></i>
-        <h3 class="text-lg font-bold text-white">Sin Interacciones Severas Detectadas</h3>
-        <p class="text-xs text-slate-400">La combinación de elementos seleccionados no registra conflicto en la matriz multidimensional activa.</p>
+        <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+          <i data-lucide="check-circle" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-base font-bold text-white">Sin Interacciones Severas Detectadas</h3>
+        <p class="text-xs text-slate-400 max-w-md mx-auto">La combinación actual de fármacos, elementos herbolarios y parámetros seleccionados no presenta incompatibilidades en el motor de reglas activo.</p>
       </div>
     `;
-    lucide.createIcons();
-    return;
-  }
-
-  matches.forEach(rule => {
-    const card = document.createElement('article');
-    const isDanger = rule.severity === 'danger';
-    
-    card.className = `bg-clinical-card rounded-2xl border ${isDanger ? 'border-rose-500/40 glow-danger' : 'border-amber-500/40'} p-5 space-y-4`;
-    card.innerHTML = `
-      <div class="flex items-start justify-between border-b border-clinical-border/60 pb-3">
-        <div class="flex items-center gap-3">
-          <span class="p-2.5 rounded-xl ${isDanger ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
-            <i data-lucide="${isDanger ? 'alert-triangle' : 'shield-alert'}" class="w-5 h-5"></i>
+  } else {
+    alertContainer.innerHTML = alerts.map(alert => `
+      <article class="bg-clinical-card rounded-2xl border ${alert.severity === 'danger' ? 'border-rose-500/40 glow-danger' : 'border-amber-500/40'} p-5 space-y-4">
+        <div class="flex items-start justify-between border-b border-clinical-border/60 pb-3">
+          <div class="flex items-center gap-3">
+            <span class="p-2.5 rounded-xl ${alert.severity === 'danger' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'}">
+              <i data-lucide="${alert.severity === 'danger' ? 'leaf' : 'syringe'}" class="w-5 h-5"></i>
+            </span>
+            <div>
+              <span class="text-[10px] font-mono uppercase text-slate-400 tracking-wider">${alert.category}</span>
+              <h2 class="text-base font-bold text-white">${alert.title}</h2>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-md text-[10px] font-bold font-mono ${alert.severity === 'danger' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'} uppercase">
+            ${alert.badge}
           </span>
-          <div>
-            <span class="text-[10px] font-mono uppercase text-slate-400 tracking-wider">${rule.category}</span>
-            <h2 class="text-base font-bold text-white">${rule.title}</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div class="bg-clinical-bg p-3.5 rounded-xl border border-clinical-border">
+            <span class="text-slate-400 font-semibold block mb-1 font-mono uppercase text-[10px]">Mecanismo</span>
+            <p class="text-slate-300 leading-relaxed">${alert.mechanism}</p>
+          </div>
+          <div class="bg-clinical-bg p-3.5 rounded-xl border border-clinical-border">
+            <span class="text-slate-400 font-semibold block mb-1 font-mono uppercase text-[10px]">Consecuencia Clínica</span>
+            <p class="text-slate-300 leading-relaxed">${alert.consequence}</p>
           </div>
         </div>
-        <span class="px-2.5 py-1 rounded-md text-[10px] font-bold font-mono ${isDanger ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'} uppercase">
-          ${rule.badge}
-        </span>
-      </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-        <div class="bg-clinical-bg p-3.5 rounded-xl border border-clinical-border">
-          <span class="text-slate-400 font-semibold block mb-1 font-mono uppercase text-[10px]">Mecanismo</span>
-          <p class="text-slate-300 leading-relaxed">${rule.mechanism}</p>
+        <div class="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl flex items-start gap-3 text-xs">
+          <i data-lucide="shield-alert" class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-cyan-300 block font-bold">Acción Sugerida:</strong>
+            <p class="text-slate-300 mt-0.5">${alert.action}</p>
+          </div>
         </div>
-        <div class="bg-clinical-bg p-3.5 rounded-xl border border-clinical-border">
-          <span class="text-slate-400 font-semibold block mb-1 font-mono uppercase text-[10px]">Consecuencia Clínica</span>
-          <p class="text-slate-300 leading-relaxed">${rule.consequence}</p>
-        </div>
-      </div>
+      </article>
+    `).join('');
+  }
 
-      <div class="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-xl flex items-start gap-3 text-xs">
-        <i data-lucide="shield-check" class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5"></i>
-        <div>
-          <strong class="text-cyan-300 block font-bold">Acción Sugerida:</strong>
-          <p class="text-slate-300 mt-0.5">${rule.action}</p>
-        </div>
-      </div>
-    `;
-    container.appendChild(card);
-  });
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
 
-  lucide.createIcons();
+// Actualizar contadores del panel "Diagnóstico de Seguridad"
+function updateCounters(alerts) {
+  const dangerCount = alerts.filter(a => a.severity === 'danger').length;
+  const warningCount = alerts.filter(a => a.severity === 'warning').length;
+  const safeCount = Math.max(0, activeItems.length - (dangerCount + warningCount));
+
+  const countElements = document.querySelectorAll('.space-y-2\\.5 .text-sm.font-bold');
+  if (countElements.length >= 3) {
+    countElements[0].textContent = dangerCount;
+    countElements[1].textContent = warningCount;
+    countElements[2].textContent = safeCount;
+  }
 }
