@@ -28,7 +28,7 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <!-- Selector Ámbito (Determina Vía y Módulo Hospitalario) -->
+        <!-- Selector Ámbito -->
         <div class="bg-slate-100 p-1 rounded-xl border border-slate-300 flex text-xs font-bold">
           <button id="btnAmbulatorio" onclick="setAmbito('ambulatorio')" 
             class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-teal-800 shadow border border-slate-300">
@@ -46,7 +46,7 @@
       </div>
     </header>
 
-    <!-- CARD PRINCIPAL: ANÁLISIS DE INTERACCIONES -->
+    <!-- CARD PRINCIPAL -->
     <main class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
       
       <div class="text-center space-y-1">
@@ -58,23 +58,23 @@
       <div class="flex flex-wrap items-center justify-between bg-teal-50/60 border-2 border-teal-200 p-3 rounded-xl gap-3">
         <div class="flex items-center gap-2">
           <span class="text-xs font-black text-teal-950 uppercase tracking-wider flex items-center gap-2">
-            <i data-lucide="route" class="w-4 h-4 text-teal-800"></i> Vía de Administración Requerida:
+            <i data-lucide="route" class="w-4 h-4 text-teal-800"></i> VÍA DE ADMINISTRACIÓN PRESCRITA:
           </span>
         </div>
         
         <div class="flex gap-1.5 bg-slate-200/80 p-1 rounded-lg border border-slate-300">
-          <button id="btnViaOral" onclick="setViaAdministracion('oral')" 
-            class="px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 bg-teal-800 text-white shadow-sm">
-            <i data-lucide="pill" class="w-3.5 h-3.5"></i> Oral
-          </button>
           <button id="btnViaIV" onclick="setViaAdministracion('iv')" 
-            class="px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900">
+            class="px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 bg-teal-800 text-white shadow-sm">
             <i data-lucide="syringe" class="w-3.5 h-3.5"></i> Intravenosa (IV)
+          </button>
+          <button id="btnViaOral" onclick="setViaAdministracion('oral')" 
+            class="px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900">
+            <i data-lucide="pill" class="w-3.5 h-3.5"></i> Oral
           </button>
         </div>
       </div>
 
-      <!-- CAMPO DE BÚSQUEDA OPENFDA -->
+      <!-- BÚSQUEDA INTEGRA-->
       <div class="relative">
         <div class="flex gap-2">
           <div class="relative flex-1">
@@ -82,7 +82,7 @@
             <input 
               type="text" 
               id="searchInput" 
-              placeholder="Escriba fármaco (ej. Omeprazol, Warfarin, Aspirina), vehículo (ej. Glucosa 5%) o alimento..." 
+              placeholder="Escriba fármaco (ej. Omeprazol IV, Pantoprazol, Warfarina), vehículo o alimento..." 
               class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-2 border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-teal-600 transition"
             >
             <div id="apiLoader" class="hidden absolute right-3 top-3">
@@ -95,10 +95,10 @@
         </div>
 
         <!-- DESPLEGABLE RESULTADOS -->
-        <div id="searchResults" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border-2 border-slate-300 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-100"></div>
+        <div id="searchResults" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border-2 border-slate-300 rounded-xl shadow-2xl z-50 max-h-72 overflow-y-auto divide-y divide-slate-100"></div>
       </div>
 
-      <!-- ELEMENTOS SELECCIONADOS (PILLS) -->
+      <!-- ELEMENTOS SELECCIONADOS -->
       <div class="space-y-2">
         <span class="text-[10px] font-black uppercase text-slate-500 tracking-wider">Elementos Seleccionados:</span>
         <div id="activePillsContainer" class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap gap-2 min-h-[50px] items-center"></div>
@@ -113,10 +113,10 @@
 
     </main>
 
-    <!-- PANEL DE RESULTADOS -->
+    <!-- PANEL DE RESULTADOS Y DIAGNÓSTICO -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-      <!-- COLUMNA IZQUIERDA: DIAGNÓSTICO Y MÓDULO Y-SITE -->
+      <!-- COLUMNA IZQUIERDA -->
       <div class="space-y-4">
         
         <!-- RESUMEN DE DIAGNÓSTICO -->
@@ -151,7 +151,6 @@
         </div>
 
         <!-- MÓDULO HOSPITALARIO: DISPOSITIVO, Y-SITE Y ESTABILIDAD -->
-        <!-- Se activa/ilumina SOLAMENTE cuando es Intravenosa (IV) / Hospitalizado -->
         <div id="hospitalModule" class="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-sm space-y-4 transition-all opacity-30 pointer-events-none">
           
           <div class="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -162,25 +161,21 @@
           </div>
 
           <div class="grid grid-cols-2 gap-2 text-xs">
-            <!-- Dispositivo / Catéter -->
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <span class="text-[9px] font-black uppercase text-slate-500 block font-mono">Dispositivo / Vía</span>
               <span id="dispVal" class="font-bold text-slate-800 block mt-0.5">Línea Periférica / Central</span>
             </div>
 
-            <!-- Tiempo-Infusión (CAMBIO SOLICITADO) -->
             <div class="bg-teal-50 p-2.5 rounded-xl border border-teal-200">
               <span class="text-[9px] font-black uppercase text-teal-900 block font-mono">Tiempo-Infusión</span>
               <span id="tiempoInfusionVal" class="font-black text-teal-800 block mt-0.5 text-xs">-- min / h</span>
             </div>
 
-            <!-- Compatibilidad Y-Site -->
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <span class="text-[9px] font-black uppercase text-slate-500 block font-mono">Co-administración Y-Site</span>
               <span id="ySiteVal" class="font-bold text-slate-800 block mt-0.5">Sin Evaluar</span>
             </div>
 
-            <!-- Protección de Luz / Filtro -->
             <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
               <span class="text-[9px] font-black uppercase text-slate-500 block font-mono">Fotoprotección / Filtro</span>
               <span id="filtroVal" class="font-bold text-slate-800 block mt-0.5">Estándar</span>
@@ -191,7 +186,7 @@
 
       </div>
 
-      <!-- COLUMNA DERECHA: TARJETAS DE ALERTAS -->
+      <!-- COLUMNA DERECHA -->
       <div class="lg:col-span-2">
         <div id="alertsContainer" class="space-y-4">
           <div class="bg-white border-2 border-slate-200 rounded-2xl p-8 text-center space-y-3 shadow-sm">
@@ -200,7 +195,7 @@
             </div>
             <h3 class="text-base font-black text-slate-800">Sistema Listo para Evaluación</h3>
             <p class="text-xs font-bold text-slate-500 max-w-sm mx-auto">
-              Ingrese fármacos o vehículos, seleccione el ámbito y presione <strong>"Evaluar Interacción"</strong>.
+              Ingrese fármacos o vehículos, seleccione la vía y presione <strong>"Evaluar Interacción"</strong>.
             </p>
           </div>
         </div>
@@ -210,55 +205,79 @@
 
   </div>
 
-  <!-- LÓGICA JAVASCRIPT REVISADA -->
   <script>
+    // BASE DE DATOS LOCAL ENRIQUECIDA CON PRESENTACIONES EXPÍCITAS IV Y ORAL
     const LOCAL_DATABASE = [
       { 
-        id: 'OMEPRAZOL', 
-        name: 'Omeprazol', 
+        id: 'OMEPRAZOL_IV', 
+        name: 'Omeprazol IV (40 mg Polvo Inyectable)', 
         genericName: 'omeprazole',
-        category: 'fármaco', 
-        detail: 'Inhibidor de la bomba de protones',
-        aliases: ['omeprazol', 'omeprazole', 'losec']
+        via: 'iv',
+        category: 'Inyectable IV', 
+        detail: 'Vía: INTRAVENOSA | Antiulceroso Parenteral',
+        aliases: ['omeprazol iv', 'omeprazol inyectable', 'omeprazol 40 mg', 'losec iv']
+      },
+      { 
+        id: 'OMEPRAZOL_ORAL', 
+        name: 'Omeprazol Oral (20 mg / 40 mg Cápsula)', 
+        genericName: 'omeprazole',
+        via: 'oral',
+        category: 'Oral', 
+        detail: 'Vía: ORAL | Inhibidor de la bomba de protones',
+        aliases: ['omeprazol oral', 'omeprazol capsulas', 'losec']
+      },
+      { 
+        id: 'PANTOPRAZOL_IV', 
+        name: 'Pantoprazol IV (40 mg Inyectable)', 
+        genericName: 'pantoprazole',
+        via: 'iv',
+        category: 'Inyectable IV', 
+        detail: 'Vía: INTRAVENOSA | Antiulceroso Parenteral',
+        aliases: ['pantoprazol', 'pantoprazol iv', 'pantoprazole']
       },
       { 
         id: 'GLUCOSA_5', 
         name: 'Solución Glucosa 5% / Dextrosa 5%', 
         genericName: 'dextrose',
-        category: 'vehículo', 
-        detail: 'Vehículo parenteral ácido (pH 3.5 - 6.5)',
+        via: 'iv',
+        category: 'Vehículo Parenteral', 
+        detail: 'Vía: INTRAVENOSA | Vehículo parenteral ácido (pH 3.5 - 6.5)',
         aliases: ['solucion glucosa 5%', 'glucosa 5%', 'solucion dextrosa 5%', 'dextrosa 5%', 'dextrosa', 'glucosa', 'sg 5%', 'sd 5%']
       },
       { 
+        id: 'SALINA_09', 
+        name: 'Solución Cloruro de Sodio 0.9% (Fisiológica)', 
+        genericName: 'sodium chloride',
+        via: 'iv',
+        category: 'Vehículo Parenteral', 
+        detail: 'Vía: INTRAVENOSA | Vehículo parenteral neutro (pH 4.5 - 7.0)',
+        aliases: ['solucion fisiologica', 'salina 0.9%', 'ss 0.9%', 'cloruro de sodio', 'fisiologica']
+      },
+      { 
         id: 'WARFARINA', 
-        name: 'Warfarina', 
+        name: 'Warfarina Oral', 
         genericName: 'warfarin',
-        category: 'fármaco', 
-        detail: 'Anticoagulante oral',
+        via: 'oral',
+        category: 'Oral', 
+        detail: 'Vía: ORAL | Anticoagulante oral',
         aliases: ['warfarina', 'warfarin', 'coumadin']
       },
       { 
         id: 'ASPIRINA', 
-        name: 'Aspirina', 
+        name: 'Aspirina Oral', 
         genericName: 'aspirin',
-        category: 'fármaco', 
-        detail: 'Antiagregante plaquetario',
+        via: 'oral',
+        category: 'Oral', 
+        detail: 'Vía: ORAL | Antiagregante plaquetario',
         aliases: ['aspirina', 'aspirin', 'aas', 'acido acetilsalicilico']
-      },
-      { 
-        id: 'SIMVASTATINA', 
-        name: 'Simvastatina', 
-        genericName: 'simvastatin',
-        category: 'fármaco', 
-        detail: 'Hipolipemiante',
-        aliases: ['simvastatina', 'simvastatin', 'zocor']
       },
       { 
         id: 'JUGO_TORONJA', 
         name: 'Jugo de Toronja', 
         genericName: 'grapefruit',
-        category: 'nutrimento', 
-        detail: 'Inhibidor CYP3A4',
+        via: 'oral',
+        category: 'Nutrimento', 
+        detail: 'Vía: ORAL | Inhibidor enzimático CYP3A4',
         aliases: ['jugo de toronja', 'toronja', 'grapefruit']
       }
     ];
@@ -287,23 +306,11 @@
         mechanism: 'El omeprazol es lábil en medio ácido. La Solución Glucosa/Dextrosa al 5% posee un pH ácido (3.5 - 6.5) que degrada el principio activo.',
         consequence: 'Pérdida rápida de estabilidad, cambio de coloración/precipitación y pérdida de eficacia.',
         action: 'Reconstituir y diluir preferentemente en Solución Fisiológica 0.9% (estable 12h) o administrar la infusión en < 2 horas.'
-      },
-      {
-        priority: 2,
-        pairKeys: ['simvastatin', 'grapefruit'],
-        vias: ['oral'],
-        severity: 'danger',
-        title: 'Simvastatina + Jugo de Toronja',
-        category: 'Interacción Medicamento - Nutrimento',
-        badge: 'Toxicidad Muscular',
-        mechanism: 'El jugo de toronja inhibe la enzima CYP3A4 intestinal.',
-        consequence: 'Incremento de la biodisponibilidad y alto riesgo de rhabdomiólisis.',
-        action: 'Evitar el consumo simultáneo de jugo de toronja.'
       }
     ];
 
     let currentAmbito = 'ambulatorio';
-    let currentVia = 'oral';
+    let currentVia = 'iv';
     let activeSelectedItems = [];
     let searchDebounceTimer = null;
 
@@ -314,7 +321,6 @@
       if (window.lucide) lucide.createIcons();
     });
 
-    // CAMBIO DE ÁMBITO (Ambulatorio vs Hospitalario)
     function setAmbito(ambito) {
       currentAmbito = ambito;
       const btnAmb = document.getElementById('btnAmbulatorio');
@@ -323,17 +329,14 @@
       if (ambito === 'ambulatorio') {
         btnAmb.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-teal-800 shadow border border-slate-300";
         btnHosp.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900";
-        // Si cambia a Ambulatorio, por defecto se asigna Oral
         setViaAdministracion('oral');
       } else {
         btnHosp.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-teal-800 shadow border border-slate-300";
         btnAmb.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900";
-        // Si cambia a Hospitalario / UCI, por defecto se asigna Intravenosa (IV)
         setViaAdministracion('iv');
       }
     }
 
-    // CAMBIO DE VÍA DE ADMINISTRACIÓN
     function setViaAdministracion(via) {
       currentVia = via;
       document.getElementById('btnViaIV').className = via === 'iv' 
@@ -348,13 +351,11 @@
       evaluateInteractions();
     }
 
-    // CONTROL DE ILUMINACIÓN Y ACTIVACIÓN DEL MÓDULO HOSPITALARIO Y-SITE
     function updateHospitalModuleState() {
       const hospModule = document.getElementById('hospitalModule');
       const uciBadge = document.getElementById('uciBadge');
 
-      // Solo se ilumina/activa si la infusión es Intravenosa (IV) o el paciente está en ámbito Hospitalario
-      if (currentVia === 'iv' || currentAmbito === 'hospitalario') {
+      if (currentVia === 'iv') {
         hospModule.classList.remove('opacity-30', 'pointer-events-none');
         hospModule.classList.add('border-teal-600', 'shadow-md', 'shadow-teal-900/5');
         uciBadge.className = "text-[9px] bg-teal-800 text-white px-2 py-0.5 rounded font-black uppercase";
@@ -365,7 +366,6 @@
       }
     }
 
-    // AUTOCOMPLETADO
     function setupSearchAutocomplete() {
       const input = document.getElementById('searchInput');
       const results = document.getElementById('searchResults');
@@ -384,17 +384,27 @@
         loader.classList.remove('hidden');
 
         searchDebounceTimer = setTimeout(async () => {
+          // Coincidencias Locales
           const localMatches = LOCAL_DATABASE.filter(item => 
             item.name.toLowerCase().includes(query) || 
             item.aliases.some(alias => alias.includes(query))
           );
 
+          // Coincidencias OpenFDA
           const fdaMatches = await fetchFromOpenFDA(query);
           loader.classList.add('hidden');
           
-          const combined = [...localMatches, ...fdaMatches];
+          // ORDENAR RESULTADOS: Poner en primer lugar las presentaciones que coinciden con currentVia
+          const combined = [...localMatches, ...fdaMatches].sort((a, b) => {
+            const aMatchesVia = (a.via === currentVia) || (currentVia === 'iv' && a.detail && a.detail.includes('INTRAVENOSA'));
+            const bMatchesVia = (b.via === currentVia) || (currentVia === 'iv' && b.detail && b.detail.includes('INTRAVENOSA'));
+            if (aMatchesVia && !bMatchesVia) return -1;
+            if (!aMatchesVia && bMatchesVia) return 1;
+            return 0;
+          });
+
           renderSearchResults(combined);
-        }, 350);
+        }, 300);
       });
 
       document.getElementById('addBtn').addEventListener('click', () => {
@@ -405,7 +415,7 @@
           id: 'CUSTOM_' + Date.now(),
           name: val,
           genericName: val.toLowerCase(),
-          category: 'manual'
+          category: 'Manual'
         });
 
         input.value = '';
@@ -424,14 +434,14 @@
 
         return data.results.map(item => {
           const generic = item.generic_name ? item.generic_name.split(',')[0].trim() : item.brand_name;
-          const routeText = item.route ? item.route.join(', ') : 'FÁRMACO';
+          const routeText = item.route ? item.route.join(', ') : 'ORAL';
           
           return {
             id: item.product_ndc || generic.toLowerCase(),
             name: item.brand_name ? `${item.brand_name} (${generic})` : generic,
             genericName: generic.toLowerCase(),
-            category: 'OpenFDA',
-            detail: `Vía: ${routeText} | ${item.dosage_form_name || 'Registro FDA'}`
+            category: 'OpenFDA (EE.UU.)',
+            detail: `Vía: ${routeText} | ${item.dosage_form_name || 'Producto Registrado'}`
           };
         });
       } catch (err) {
@@ -444,18 +454,28 @@
       container.innerHTML = '';
 
       if (matches.length === 0) {
-        container.innerHTML = `<div class="p-3 text-xs font-bold text-slate-500">Sin resultados en OpenFDA.</div>`;
+        container.innerHTML = `<div class="p-3 text-xs font-bold text-slate-500">Sin resultados.</div>`;
       } else {
         matches.forEach(item => {
+          const isIV = item.via === 'iv' || (item.detail && item.detail.includes('INTRAVENOSA'));
+          const isSelectedVia = (currentVia === 'iv' && isIV) || (currentVia === 'oral' && !isIV);
+
           const div = document.createElement('div');
-          div.className = 'p-3 hover:bg-teal-50 cursor-pointer border-b border-slate-100 flex items-center justify-between text-xs font-bold text-slate-900 transition';
+          div.className = `p-3 hover:bg-teal-50 cursor-pointer border-b border-slate-100 flex items-center justify-between text-xs font-bold transition ${
+            isSelectedVia ? 'bg-teal-50/40' : 'bg-white'
+          }`;
+          
           div.innerHTML = `
             <div>
-              <span class="block font-black text-slate-900">${item.name}</span>
-              <span class="text-[11px] font-semibold text-slate-500">${item.detail || ''}</span>
+              <div class="flex items-center gap-2">
+                <span class="font-black text-slate-900">${item.name}</span>
+                ${isIV ? '<span class="bg-teal-800 text-white text-[9px] px-1.5 py-0.2 rounded font-mono font-black">IV INYECTABLE</span>' : '<span class="bg-slate-200 text-slate-700 text-[9px] px-1.5 py-0.2 rounded font-mono font-bold">ORAL</span>'}
+              </div>
+              <span class="text-[11px] font-semibold text-slate-500 block mt-0.5">${item.detail || ''}</span>
             </div>
-            <span class="text-[10px] ${item.category === 'OpenFDA' ? 'bg-sky-100 text-sky-800 border-sky-300' : 'bg-slate-100 text-slate-700 border-slate-200'} px-2 py-0.5 rounded font-mono uppercase font-bold border">${item.category}</span>
+            <span class="text-[10px] ${item.category.includes('OpenFDA') ? 'bg-sky-100 text-sky-800 border-sky-300' : 'bg-teal-100 text-teal-900 border-teal-300'} px-2 py-0.5 rounded font-mono uppercase font-bold border">${item.category}</span>
           `;
+
           div.onclick = () => {
             addItemToActiveList(item);
             document.getElementById('searchInput').value = '';
@@ -472,11 +492,7 @@
       if (!exists) {
         activeSelectedItems.push(item);
         renderActivePills();
-
-        // Si el usuario agrega Omeprazol, sugerir o ajustar automáticamente la vía/ámbito si lo desea
-        if (item.genericName.includes('omepraz')) {
-          evaluateInteractions();
-        }
+        evaluateInteractions();
       }
     }
 
@@ -510,7 +526,6 @@
       evaluateInteractions();
     }
 
-    // EVALUACIÓN DE INTERACCIONES
     function evaluateInteractions() {
       let matchedRules = [];
       const activeGenerics = activeSelectedItems.map(item => item.genericName || item.name.toLowerCase());
@@ -532,7 +547,6 @@
       updateHospitalModuleValues(activeGenerics, matchedRules);
     }
 
-    // ACTUALIZA VALORES DINÁMICOS EN EL MÓDULO DISPOSITIVO / TIEMPO-INFUSIÓN / Y-SITE
     function updateHospitalModuleValues(activeGenerics, matchedRules) {
       const tiempoInfusionVal = document.getElementById('tiempoInfusionVal');
       const ySiteVal = document.getElementById('ySiteVal');
@@ -553,7 +567,7 @@
           dispVal.textContent = "Línea Dedicada Requerida";
           filtroVal.textContent = "Proteger de la Luz";
         } else if (isOmeprazolPresent) {
-          tiempoInfusionVal.textContent = "12 Horas (en Sol. Fisiológica 0.9%)";
+          tiempoInfusionVal.textContent = "12 Horas (en SS 0.9%)";
           tiempoInfusionVal.className = "font-black text-teal-800 block mt-0.5 text-xs";
           
           ySiteVal.textContent = "Compatible en SS 0.9%";
