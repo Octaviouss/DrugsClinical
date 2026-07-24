@@ -12,12 +12,14 @@ const CLINICAL_DATABASE = [
   { id: '6', name: 'Furosemida', category: 'fármaco', detail: 'Diurético de asa (Infusión IV)' },
   { id: '7', name: 'Midazolam', category: 'fármaco', detail: 'Sedante (Infusión IV)' },
   { id: '8', name: 'eGFR < 30 mL/min', category: 'condicion', detail: 'Insuficiencia renal severa' },
-  { id: '9', name: 'Omeprazol', category: 'fármaco', detail: 'Inhibidor de la bomba de protones' },
-  { id: '10', name: 'Levotiroxina', category: 'fármaco', detail: 'Hormona tiroidea' },
-  { id: '11', name: 'Nitroglicerina IV', category: 'fármaco', detail: 'Vasodilatador lipofílico' }
+  { id: '9', name: 'Omeprazol IV', category: 'fármaco', detail: 'Inhibidor de la bomba de protones (Parenteral)' },
+  { id: '10', name: 'Solución Glucosa 5%', category: 'nutrimento', detail: 'Vehículo parenteral ácido (pH 3.5 - 6.5)' },
+  { id: '11', name: 'Solución Fisiológica 0.9%', category: 'nutrimento', detail: 'Vehículo parenteral isosmótico (pH neutro)' },
+  { id: '12', name: 'Levotiroxina', category: 'fármaco', detail: 'Hormona tiroidea' },
+  { id: '13', name: 'Nitroglicerina IV', category: 'fármaco', detail: 'Vasodilatador lipofílico' }
 ];
 
-// Matriz de Reglas categorizadas para ordenamiento automático
+// Matriz de Reglas
 const INTERACTION_RULES = [
   // 1. Medicamento - Medicamento
   {
@@ -28,24 +30,24 @@ const INTERACTION_RULES = [
     title: 'Warfarina + Aspirina 100mg',
     category: 'Interacción Medicamento - Medicamento',
     badge: 'Riesgo Alto de Sangrado',
-    mechanism: 'Sinergismo pharmacodinámico sobre la cascada de coagulación y la agregación plaquetaria.',
+    mechanism: 'Sinergismo farmacodinámico sobre la cascada de coagulación y agregación plaquetaria.',
     consequence: 'Elevado riesgo de hemorragia gastrointestinal o sistémica grave.',
     action: 'Evaluar necesidad estricta de anticoagulación doble. Considerar IBP de soporte.'
   },
-  {
-    type: 'fármaco-fármaco',
-    priority: 1,
-    pair: ['Omeprazol', 'Levotiroxina'],
-    severity: 'warning',
-    title: 'Omeprazol + Levotiroxina',
-    category: 'Interacción Medicamento - Medicamento',
-    badge: 'Reducción de Absorción',
-    mechanism: 'El aumento del pH gástrico producido por el IBP disminuye la solubilidad de la levotiroxina.',
-    consequence: 'Control deficiente del hipotiroidismo (posible elevación indeseada de TSH).',
-    action: 'Separar las tomas al menos 4 horas o reajustar dosis de levotiroxina.'
-  },
 
-  // 2. Medicamento - Nutrimento
+  // 2. Medicamento - Nutrimento / Vehículo Parenteral
+  {
+    type: 'fármaco-nutrimento',
+    priority: 2,
+    pair: ['Omeprazol IV', 'Solución Glucosa 5%'],
+    severity: 'danger',
+    title: 'Omeprazol IV + Solución Glucosa 5%',
+    category: 'Interacción Medicamento - Nutrimento / Vehículo',
+    badge: 'Degradación Ácida Rápida',
+    mechanism: 'El omeprazol es una molécula lábil en medio ácido. La Solución Glucosa 5% posee un pH ácido (3.5 - 6.5) que acelera la degradación e hidrólisis del fármaco.',
+    consequence: 'Pérdida rápida de estabilidad, posible viraje de color/precipitación y pérdida total de eficacia terapéutica en infusiones > 2 a 4 horas.',
+    action: 'Reconstituir y diluir exclusivamente en Solución Fisiológica 0.9% (estable hasta 12h) o administrarse en bolo/infusión inmediata (< 2 horas).'
+  },
   {
     type: 'fármaco-nutrimento',
     priority: 2,
@@ -207,13 +209,13 @@ function renderSearchResults(matches) {
   container.classList.remove('hidden');
 }
 
-// Render de Pills Seleccionadas
+// Render de Pills
 function renderActivePills() {
   const container = document.getElementById('activePillsContainer');
   container.innerHTML = '';
 
   if (activeItems.length === 0) {
-    container.innerHTML = `<span class="text-xs font-bold text-slate-500 italic">Lista vacía. Ingrese fármacos, alimentos o suplementos arriba.</span>`;
+    container.innerHTML = `<span class="text-xs font-bold text-slate-500 italic">Lista vacía. Ingrese fármacos, vehículos o condiciones arriba.</span>`;
     return;
   }
 
@@ -250,10 +252,12 @@ function evaluateInteractions() {
     }
   });
 
-  // Módulo Hospitalario
+  // Módulo Hospitalario: Evaluar Adsorción, Y-Site y Estabilidad en el Tiempo
   if (currentAmbito === 'hospitalario') {
     const deviceSelect = document.getElementById('deviceSelect').value;
+    const stabilityTime = document.getElementById('timeStabilitySelect').value;
     
+    // Adsorción Nitroglicerina
     if (deviceSelect === 'pvc_adsorcion' && activeItems.includes('Nitroglicerina IV')) {
       matchedRules.push({
         type: 'fármaco-fármaco',
@@ -268,14 +272,27 @@ function evaluateInteractions() {
       });
     }
 
+    // Evaluación de Estabilidad Temporal
+    if ((stabilityTime === 'prolongado' || stabilityTime === 'critico') && activeItems.includes('Omeprazol IV') && activeItems.includes('Solución Glucosa 5%')) {
+      matchedRules.push({
+        type: 'fármaco-nutrimento',
+        priority: 2,
+        severity: 'danger',
+        title: 'Estabilidad Excedida: Omeprazol en Glucosa 5%',
+        category: 'Inestabilidad Físico-Química Temporal',
+        badge: 'Degradación Total (> 6h)',
+        mechanism: 'En mezcla con glucosa ácida a un tiempo transcurrido superior a 2-4 horas, la degradación por hidrólisis alcanza valores críticos.',
+        consequence: 'Pérdida severa de potencia farmacológica e insumos de degradación visibles.',
+        action: 'Reemplazar infusión actual inmediatamente por preparación fresca en Solución Fisiológica 0.9%.'
+      });
+    }
+
     evaluateYSiteCompatibility();
   }
 
-  // ORDENAR SEGÚN JERARQUÍA EXIGIDA:
-  // 1. Medicamento-Medicamento | 2. Medicamento-Nutrimento | 3. Medicamento-Enfermedad | 4. Medicamento-Herbolario
+  // ORDENAR SEGÚN JERARQUÍA EXIGIDA
   matchedRules.sort((a, b) => a.priority - b.priority);
 
-  // Renderizar
   renderAlertsUI(matchedRules);
   updateCountersUI(matchedRules);
 }
@@ -305,15 +322,13 @@ function evaluateYSiteCompatibility() {
   }
 }
 
-// RENDER DE ALERTAS (DESENFOQUE REMOVIDO E ILUMINACIÓN POR ORDEN)
+// RENDER DE ALERTAS
 function renderAlertsUI(rules) {
   const container = document.getElementById('alertsContainer');
   const diagnosticPanel = document.getElementById('diagnosticPanel');
   const statusBadge = document.getElementById('statusBadge');
   
-  // Iluminar Diagnóstico
   diagnosticPanel.classList.remove('opacity-30', 'grayscale');
-
   container.innerHTML = '';
 
   if (rules.length === 0) {
@@ -339,7 +354,6 @@ function renderAlertsUI(rules) {
       const isDanger = rule.severity === 'danger';
       const card = document.createElement('article');
       
-      // Borde grueso y colores ultra llamativos para alto contraste
       card.className = `bg-white border-2 ${
         isDanger 
           ? 'border-red-600 shadow-xl shadow-red-600/10 ring-2 ring-red-600' 
