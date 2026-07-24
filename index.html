@@ -13,10 +13,10 @@
         extend: {
           colors: {
             clinical: {
-              bg: '#F1F5F9',        /* Fondo general con mayor profundidad para resaltar paneles */
+              bg: '#F1F5F9',
               card: '#FFFFFF',
-              border: '#CBD5E1',    /* Bordes más oscuros y definidos */
-              textMain: '#0F172A',  /* Texto ultra legible (Slate-900) */
+              border: '#CBD5E1',
+              textMain: '#0F172A',
               aquamarine: '#0D9488',
               aquamarineDark: '#115E59'
             }
@@ -31,11 +31,11 @@
 </head>
 <body class="bg-clinical-bg text-clinical-textMain min-h-screen flex flex-col font-sans antialiased">
 
-  <!-- NAVBAR MÉDICA CON LOGO EN ALTO CONTRASTE -->
+  <!-- NAVBAR MÉDICA -->
   <header class="bg-white border-b-2 border-slate-300 sticky top-0 z-50 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       
-      <!-- BRANDING DRUGSCLINICAL CON ISOTIPO COMPUESTO -->
+      <!-- BRANDING DRUGSCLINICAL CON ISOTIPO -->
       <div class="flex items-center space-x-3.5 cursor-pointer">
         <div class="relative flex items-center justify-center w-14 h-14 bg-teal-600 rounded-2xl border-2 border-teal-800 text-white shadow-md shadow-teal-700/30 overflow-hidden">
           <i data-lucide="cross" class="w-8 h-8 text-teal-100 opacity-40"></i>
@@ -68,7 +68,7 @@
       </div>
 
       <!-- STATUS CORE -->
-      <div class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-100 border-2 border-teal-600 text-teal-9 font-bold text-xs">
+      <div class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-100 border-2 border-teal-600 text-teal-900 font-bold text-xs">
         <span class="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse"></span>
         Core 7D Activo
       </div>
@@ -87,16 +87,16 @@
           Análisis de Interacciones y Seguridad Prescriptiva
         </h1>
         <p class="text-xs font-semibold text-slate-600">
-          Ingrese los fármacos, alimentos/nutrimentos, condiciones o suplementos del paciente.
+          Ingrese los fármacos, vehículos/soluciones, alimentos, condiciones o suplementos del paciente.
         </p>
       </div>
 
-      <!-- CAMPO DE BÚSQUEDA ALTO CONTRASTE -->
+      <!-- CAMPO DE BÚSQUEDA -->
       <div class="relative max-w-3xl mx-auto">
         <div class="flex items-center bg-slate-100 border-2 border-slate-400 focus-within:border-teal-600 focus-within:bg-white rounded-xl px-4 py-3 transition">
           <i data-lucide="search" class="w-5 h-5 text-slate-600 mr-3"></i>
           <input type="text" id="searchInput" autocomplete="off"
-            placeholder="Escriba fármaco, alimento, condición o suplemento (ej. Warfarina, Toronja, IR)..." 
+            placeholder="Escriba fármaco, vehículo (ej. Glucosa 5%), alimento o condición..." 
             class="w-full bg-transparent text-sm font-semibold text-slate-900 placeholder-slate-500 focus:outline-none">
           <button id="addBtn" class="ml-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
             <i data-lucide="plus" class="w-4 h-4"></i> Agregar
@@ -106,7 +106,7 @@
         <div id="searchResults" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border-2 border-slate-400 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto"></div>
       </div>
 
-      <!-- PILLS CON ALTO CONTRASTE -->
+      <!-- PILLS -->
       <div class="max-w-3xl mx-auto space-y-2">
         <span class="text-xs font-bold text-slate-700 uppercase tracking-wider font-mono block">Elementos en lista:</span>
         <div id="activePillsContainer" class="flex flex-wrap gap-2 items-center min-h-[46px] p-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl">
@@ -114,7 +114,7 @@
         </div>
       </div>
 
-      <!-- BOTÓN PRINCIPAL "EVALUAR INTERACCIÓN" -->
+      <!-- BOTÓN EVALUAR -->
       <div class="flex justify-center pt-2">
         <button id="evaluateBtn" onclick="evaluateInteractions()" class="px-8 py-3.5 bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-sm rounded-xl shadow-lg hover:shadow-teal-700/30 transition-all flex items-center gap-2 border border-teal-900">
           <i data-lucide="play-circle" class="w-5 h-5"></i>
@@ -127,10 +127,10 @@
     <!-- WORKSPACE DE RESULTADOS -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- COLUMNA IZQUIERDA: DIAGNÓSTICO DE SEGURIDAD Y MÓDULO HOSPITALARIO -->
+      <!-- COLUMNA IZQUIERDA -->
       <div class="space-y-6">
         
-        <!-- RESUMEN DE DIAGNÓSTICO (ESTADO DESENFOCADO POR DEFECTO) -->
+        <!-- RESUMEN DE DIAGNÓSTICO -->
         <div id="diagnosticPanel" class="bg-white p-5 rounded-2xl border-2 border-slate-300 shadow-sm space-y-4 opacity-30 grayscale transition-all duration-500">
           <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center justify-between font-mono border-b border-slate-200 pb-2">
             <span>Diagnóstico de Seguridad</span>
@@ -160,13 +160,27 @@
           </div>
         </div>
 
-        <!-- MÓDULO HOSPITALARIO -->
+        <!-- MÓDULO HOSPITALARIO + CONTROL DE ESTABILIDAD EN EL TIEMPO -->
         <div id="hospitalModule" class="bg-white p-5 rounded-2xl border-2 border-slate-300 opacity-30 pointer-events-none transition-all duration-300 shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b-2 border-slate-200 pb-3">
             <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider font-mono flex items-center gap-2">
-              <i data-lucide="syringe" class="w-4 h-4 text-teal-700"></i> Dispositivo y Y-Site IV
+              <i data-lucide="syringe" class="w-4 h-4 text-teal-700"></i> Dispositivo, Y-Site y Estabilidad
             </h4>
             <span id="uciBadge" class="text-[10px] bg-slate-200 text-slate-800 px-2 py-0.5 rounded border border-slate-300 font-bold font-mono">Solo Hospitalario</span>
+          </div>
+
+          <!-- CASILLA/SELECTOR DE ESTABILIDAD EN EL TIEMPO (NUEVA FUNCIONALIDAD) -->
+          <div class="space-y-1.5 p-3 bg-amber-50/60 rounded-xl border border-amber-200">
+            <label class="text-xs font-black text-amber-950 flex items-center gap-1.5">
+              <i data-lucide="clock" class="w-4 h-4 text-amber-700"></i>
+              Tiempo Transcurrido / Estabilidad de Mezcla:
+            </label>
+            <select id="timeStabilitySelect" class="w-full bg-white border-2 border-amber-300 rounded-lg p-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-400 focus:outline-none">
+              <option value="inmediato">Infusión Inmediata (&lt; 2 horas)</option>
+              <option value="medio">Infusión Intermedia (2 a 6 horas)</option>
+              <option value="prolongado">Infusión Prolongada (&gt; 6 a 12 horas)</option>
+              <option value="critico">Infusión Extendida (&gt; 12 horas)</option>
+            </select>
           </div>
 
           <div class="space-y-1.5">
@@ -186,7 +200,7 @@
           </div>
 
           <div class="pt-2 border-t border-slate-200 space-y-2">
-            <span class="text-[11px] font-black text-slate-700 font-mono uppercase block">Compatibilidad Y-Site:</span>
+            <span class="text-[11px] font-black text-slate-700 font-mono uppercase block">Compatibilidad Y-Site / Estabilidad:</span>
             <div id="ySiteStatus" class="p-3 bg-slate-100 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700">
               Seleccione productos e inicie la evaluación hospitalaria.
             </div>
@@ -195,9 +209,8 @@
 
       </div>
 
-      <!-- COLUMNA DERECHA: TARJETAS DE ALERTAS CLASIFICADAS POR ORDEN -->
+      <!-- COLUMNA DERECHA -->
       <div id="alertsContainer" class="lg:col-span-2 space-y-4">
-        <!-- MARCA DE AGUA EN ESPERA -->
         <div class="bg-white border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center space-y-3 shadow-sm opacity-30 grayscale">
           <i data-lucide="shield-alert" class="w-14 h-14 text-slate-500 mx-auto stroke-1"></i>
           <h3 class="text-base font-black text-slate-700 uppercase font-mono tracking-wider">Panel de Alertas Inactivo</h3>
