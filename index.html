@@ -3,237 +3,582 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DrugsClinical | Advance Point Care</title>
-  
+  <title>DrugsClinical - Análisis con API OpenFDA</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            clinical: {
-              bg: '#F1F5F9',
-              card: '#FFFFFF',
-              border: '#CBD5E1',
-              textMain: '#0F172A',
-              aquamarine: '#0D9488',
-              aquamarineDark: '#115E59'
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Lucide Icons -->
+  <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-clinical-bg text-clinical-textMain min-h-screen flex flex-col font-sans antialiased">
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans p-4 md:p-8">
 
-  <!-- NAVBAR MÉDICA -->
-  <header class="bg-white border-b-2 border-slate-300 sticky top-0 z-50 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-      
-      <!-- BRANDING DRUGSCLINICAL CON ISOTIPO -->
-      <div class="flex items-center space-x-3.5 cursor-pointer">
-        <div class="relative flex items-center justify-center w-14 h-14 bg-teal-600 rounded-2xl border-2 border-teal-800 text-white shadow-md shadow-teal-700/30 overflow-hidden">
-          <i data-lucide="cross" class="w-8 h-8 text-teal-100 opacity-40"></i>
-          <div class="absolute inset-0 flex items-center justify-center gap-0.5">
-            <i data-lucide="pill" class="w-5 h-5 text-white drop-shadow -rotate-12"></i>
-            <i data-lucide="syringe" class="w-5 h-5 text-teal-100 drop-shadow rotate-45 -ml-1"></i>
-          </div>
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-teal-800 text-white flex items-center justify-center font-black text-xl shadow-md">
+          <i data-lucide="syringe" class="w-6 h-6"></i>
         </div>
-
         <div>
-          <span class="text-3xl font-black tracking-tight text-slate-900 leading-none">
-            DRUGS<span class="text-teal-700 font-extrabold">CLINICAL</span>
-          </span>
-          <span class="block text-xs text-teal-900 font-mono tracking-wider uppercase mt-1 font-bold">
-            Advance Point Care
-          </span>
+          <h1 class="text-xl font-black tracking-tight text-teal-950 flex items-center gap-2">
+            DRUGS<span class="text-teal-600">CLINICAL</span>
+          </h1>
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">ADVANCE POINT CARE</p>
         </div>
       </div>
 
-      <!-- SELECTOR DE ÁMBITO -->
-      <div class="flex items-center bg-slate-200 p-1.5 rounded-xl border border-slate-300">
-        <button id="btnAmbulatorio" onclick="setAmbito('ambulatorio')" 
-          class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-teal-800 shadow border border-slate-300">
-          <i data-lucide="user-check" class="w-4 h-4"></i> Ambulatorio
-        </button>
-        <button id="btnHospitalario" onclick="setAmbito('hospitalario')" 
-          class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900">
-          <i data-lucide="building-2" class="w-4 h-4"></i> Hospitalario / UCI
-        </button>
+      <div class="flex items-center gap-3">
+        <!-- Selector Ámbito -->
+        <div class="bg-slate-100 p-1 rounded-xl border border-slate-300 flex text-xs font-bold">
+          <button id="btnAmbulatorio" onclick="setAmbito('ambulatorio')" 
+            class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-teal-800 shadow border border-slate-300">
+            <i data-lucide="user" class="w-3.5 h-3.5"></i> Ambulatorio
+          </button>
+          <button id="btnHospitalario" onclick="setAmbito('hospitalario')" 
+            class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900">
+            <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Hospitalario / UCI
+          </button>
+        </div>
+
+        <span class="text-xs bg-sky-100 text-sky-900 border border-sky-300 font-black px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span> OpenFDA API Live
+        </span>
       </div>
+    </header>
 
-      <!-- STATUS CORE -->
-      <div class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-100 border-2 border-teal-600 text-teal-900 font-bold text-xs">
-        <span class="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse"></span>
-        Core 7D Activo
-      </div>
-
-    </div>
-  </header>
-
-  <!-- CONTENIDO PRINCIPAL -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-    
-    <!-- PANEL DE BÚSQUEDA Y EVALUACIÓN -->
-    <section class="bg-white border-2 border-slate-300 rounded-2xl p-6 shadow-sm space-y-6">
+    <!-- CARD PRINCIPAL: ANÁLISIS DE INTERACCIONES -->
+    <main class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
       
-      <div class="max-w-3xl mx-auto text-center space-y-2">
-        <h1 class="text-2xl font-black text-slate-900 tracking-tight">
-          Análisis de Interacciones y Seguridad Prescriptiva
-        </h1>
-        <p class="text-xs font-semibold text-slate-600">
-          Ingrese los fármacos, vehículos/soluciones, alimentos, condiciones o suplementos del paciente.
-        </p>
+      <div class="text-center space-y-1">
+        <h2 class="text-2xl font-black text-slate-900">Análisis de Interacciones y Seguridad Prescriptiva</h2>
+        <p class="text-xs font-bold text-slate-500">Búsqueda global conectada a OpenFDA y matriz clínica local de vehículos/soluciones.</p>
       </div>
 
-      <!-- CAMPO DE BÚSQUEDA -->
-      <div class="relative max-w-3xl mx-auto">
-        <div class="flex items-center bg-slate-100 border-2 border-slate-400 focus-within:border-teal-600 focus-within:bg-white rounded-xl px-4 py-3 transition">
-          <i data-lucide="search" class="w-5 h-5 text-slate-600 mr-3"></i>
-          <input type="text" id="searchInput" autocomplete="off"
-            placeholder="Escriba fármaco, vehículo (ej. Glucosa 5%), alimento o condición..." 
-            class="w-full bg-transparent text-sm font-semibold text-slate-900 placeholder-slate-500 focus:outline-none">
-          <button id="addBtn" class="ml-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow">
+      <!-- SECTOR: SELECCIÓN DE VÍA DE ADMINISTRACIÓN -->
+      <div class="flex flex-wrap items-center justify-between bg-teal-50/60 border-2 border-teal-200 p-3 rounded-xl gap-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-black text-teal-950 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="route" class="w-4 h-4 text-teal-800"></i> Vía de Administración Prescrita:
+          </span>
+        </div>
+        
+        <div class="flex gap-1.5 bg-slate-200/80 p-1 rounded-lg border border-slate-300">
+          <button id="btnViaIV" onclick="setViaAdministracion('iv')" 
+            class="px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 bg-teal-800 text-white shadow-sm">
+            <i data-lucide="syringe" class="w-3.5 h-3.5"></i> Intravenosa (IV)
+          </button>
+          <button id="btnViaOral" onclick="setViaAdministracion('oral')" 
+            class="px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900">
+            <i data-lucide="pill" class="w-3.5 h-3.5"></i> Oral
+          </button>
+        </div>
+      </div>
+
+      <!-- CAMPO DE BÚSQUEDA Y AUTOCOMPLETADO DINO CON OPENFDA -->
+      <div class="relative">
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-3 text-slate-400"></i>
+            <input 
+              type="text" 
+              id="searchInput" 
+              placeholder="Escriba fármaco (ej. Omeprazole, Warfarin, Aspirin), vehículo (ej. Dextrosa) o condición..." 
+              class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-2 border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-teal-600 transition"
+            >
+            <!-- Indicador de Carga de API -->
+            <div id="apiLoader" class="hidden absolute right-3 top-3">
+              <i data-lucide="loader-2" class="w-4 h-4 text-teal-600 animate-spin"></i>
+            </div>
+          </div>
+          <button id="addBtn" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md">
             <i data-lucide="plus" class="w-4 h-4"></i> Agregar
           </button>
         </div>
 
-        <div id="searchResults" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border-2 border-slate-400 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto"></div>
+        <!-- LISTA DESPLEGABLE RESULTADOS -->
+        <div id="searchResults" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border-2 border-slate-300 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-100"></div>
       </div>
 
-      <!-- PILLS -->
-      <div class="max-w-3xl mx-auto space-y-2">
-        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider font-mono block">Elementos en lista:</span>
-        <div id="activePillsContainer" class="flex flex-wrap gap-2 items-center min-h-[46px] p-2.5 bg-slate-100 border-2 border-slate-300 rounded-xl">
-          <!-- Se cargan dinámicamente -->
-        </div>
+      <!-- ELEMENTOS EN LISTA (PILLS) -->
+      <div class="space-y-2">
+        <span class="text-[10px] font-black uppercase text-slate-500 tracking-wider">Elementos en Lista:</span>
+        <div id="activePillsContainer" class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap gap-2 min-h-[50px] items-center"></div>
       </div>
 
-      <!-- BOTÓN EVALUAR -->
-      <div class="flex justify-center pt-2">
-        <button id="evaluateBtn" onclick="evaluateInteractions()" class="px-8 py-3.5 bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-sm rounded-xl shadow-lg hover:shadow-teal-700/30 transition-all flex items-center gap-2 border border-teal-900">
-          <i data-lucide="play-circle" class="w-5 h-5"></i>
-          EVALUAR INTERACCIÓN
+      <!-- BOTÓN DE EVALUACIÓN -->
+      <div class="text-center pt-2">
+        <button onclick="evaluateInteractions()" class="px-8 py-3 bg-teal-800 hover:bg-teal-900 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg transition flex items-center gap-2 mx-auto">
+          <i data-lucide="play-circle" class="w-5 h-5"></i> Evaluar Interacción
         </button>
       </div>
 
-    </section>
+    </main>
 
-    <!-- WORKSPACE DE RESULTADOS -->
+    <!-- PANEL DE RESULTADOS Y DIAGNÓSTICO -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      
-      <!-- COLUMNA IZQUIERDA -->
-      <div class="space-y-6">
+
+      <!-- COLUMNA IZQUIERDA: DIAGNÓSTICO DE SEGURIDAD -->
+      <div class="space-y-4">
         
-        <!-- RESUMEN DE DIAGNÓSTICO -->
-        <div id="diagnosticPanel" class="bg-white p-5 rounded-2xl border-2 border-slate-300 shadow-sm space-y-4 opacity-30 grayscale transition-all duration-500">
-          <h3 class="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center justify-between font-mono border-b border-slate-200 pb-2">
-            <span>Diagnóstico de Seguridad</span>
-            <span id="statusBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-800 border border-slate-300 font-bold">Inactivo</span>
-          </h3>
+        <div id="diagnosticPanel" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-xs font-black uppercase text-slate-500 tracking-wider">Diagnóstico de Seguridad</h3>
+            <span id="statusBadge" class="text-[10px] px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-black uppercase">Pendiente</span>
+          </div>
+
           <div class="space-y-2">
-            <div id="highRiskBox" class="flex justify-between items-center p-3 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 transition-all duration-300">
-              <span class="text-xs font-bold flex items-center gap-2">
+            <div id="highRiskBox" class="flex justify-between items-center p-3 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-bold text-xs">
+              <span class="flex items-center gap-2">
                 <span id="highRiskDot" class="w-3 h-3 rounded-full bg-slate-400"></span> Riesgo Alto / Contraindicado
               </span>
-              <span id="highRiskCount" class="text-sm font-black">0</span>
+              <span id="highRiskCount" class="font-black text-sm">0</span>
             </div>
 
-            <div id="modRiskBox" class="flex justify-between items-center p-3 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 transition-all duration-300">
-              <span class="text-xs font-bold flex items-center gap-2">
+            <div id="modRiskBox" class="flex justify-between items-center p-3 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-bold text-xs">
+              <span class="flex items-center gap-2">
                 <span id="modRiskDot" class="w-3 h-3 rounded-full bg-slate-400"></span> Riesgo Moderado
               </span>
-              <span id="modRiskCount" class="text-sm font-black">0</span>
+              <span id="modRiskCount" class="font-black text-sm">0</span>
             </div>
 
-            <div id="safeBox" class="flex justify-between items-center p-3 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 transition-all duration-300">
-              <span class="text-xs font-bold flex items-center gap-2">
+            <div id="safeBox" class="flex justify-between items-center p-3 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 font-bold text-xs">
+              <span class="flex items-center gap-2">
                 <span id="safeDot" class="w-3 h-3 rounded-full bg-slate-400"></span> Sin Riesgo Detectado
               </span>
-              <span id="safeCount" class="text-sm font-black">0</span>
+              <span id="safeCount" class="font-black text-sm">0</span>
             </div>
           </div>
         </div>
 
-        <!-- MÓDULO HOSPITALARIO + CONTROL DE ESTABILIDAD EN EL TIEMPO -->
-        <div id="hospitalModule" class="bg-white p-5 rounded-2xl border-2 border-slate-300 opacity-30 pointer-events-none transition-all duration-300 shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b-2 border-slate-200 pb-3">
-            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider font-mono flex items-center gap-2">
-              <i data-lucide="syringe" class="w-4 h-4 text-teal-700"></i> Dispositivo, Y-Site y Estabilidad
-            </h4>
-            <span id="uciBadge" class="text-[10px] bg-slate-200 text-slate-800 px-2 py-0.5 rounded border border-slate-300 font-bold font-mono">Solo Hospitalario</span>
+        <!-- MÓDULO HOSPITALARIO Y-SITE -->
+        <div id="hospitalModule" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 opacity-30 pointer-events-none transition-all">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="text-xs font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5">
+              <i data-lucide="test-tube-2" class="w-4 h-4 text-teal-800"></i> Dispositivo, Y-Site y Estabilidad
+            </h3>
+            <span id="uciBadge" class="text-[9px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-black uppercase">Solo Hospitalario</span>
           </div>
 
-          <!-- CASILLA/SELECTOR DE ESTABILIDAD EN EL TIEMPO (NUEVA FUNCIONALIDAD) -->
-          <div class="space-y-1.5 p-3 bg-amber-50/60 rounded-xl border border-amber-200">
-            <label class="text-xs font-black text-amber-950 flex items-center gap-1.5">
-              <i data-lucide="clock" class="w-4 h-4 text-amber-700"></i>
-              Tiempo Transcurrido / Estabilidad de Mezcla:
-            </label>
-            <select id="timeStabilitySelect" class="w-full bg-white border-2 border-amber-300 rounded-lg p-2 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-400 focus:outline-none">
-              <option value="inmediato">Infusión Inmediata (&lt; 2 horas)</option>
-              <option value="medio">Infusión Intermedia (2 a 6 horas)</option>
-              <option value="prolongado">Infusión Prolongada (&gt; 6 a 12 horas)</option>
-              <option value="critico">Infusión Extendida (&gt; 12 horas)</option>
-            </select>
-          </div>
-
-          <div class="space-y-1.5">
-            <label class="text-xs font-bold text-slate-900 block">Tipo de Set de Infusión Utilizado:</label>
-            <select id="deviceSelect" class="w-full bg-slate-100 border-2 border-slate-300 rounded-lg p-2.5 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-teal-300 focus:outline-none">
-              <option value="estandar">Set Standard PVC (Sin filtro especial)</option>
-              <option value="pvc_adsorcion">Set Infusión PVC Standard</option>
-              <option value="libre_pvc">Set Libre de PVC (Polietileno / Poliolefina)</option>
-              <option value="fotoprotector">Set Fotoprotector (Opaco)</option>
-            </select>
-          </div>
-
-          <div class="space-y-1.5">
-            <label class="text-xs font-bold text-slate-900 block">Velocidad de Infusión Sugerida:</label>
-            <input type="text" id="infusionRateInput" placeholder="Ej. 10 ml/h o Infusión Continua" 
-              class="w-full bg-slate-100 border-2 border-slate-300 rounded-lg p-2 text-xs font-semibold text-slate-900 focus:outline-none">
-          </div>
-
-          <div class="pt-2 border-t border-slate-200 space-y-2">
-            <span class="text-[11px] font-black text-slate-700 font-mono uppercase block">Compatibilidad Y-Site / Estabilidad:</span>
-            <div id="ySiteStatus" class="p-3 bg-slate-100 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700">
-              Seleccione productos e inicie la evaluación hospitalaria.
-            </div>
+          <div id="ySiteStatus" class="p-3 bg-slate-100 border border-slate-300 rounded-xl text-xs text-slate-500 font-bold">
+            Seleccione el ámbito Hospitalario para activar el control de incompatibilidad en línea IV.
           </div>
         </div>
 
       </div>
 
-      <!-- COLUMNA DERECHA -->
-      <div id="alertsContainer" class="lg:col-span-2 space-y-4">
-        <div class="bg-white border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center space-y-3 shadow-sm opacity-30 grayscale">
-          <i data-lucide="shield-alert" class="w-14 h-14 text-slate-500 mx-auto stroke-1"></i>
-          <h3 class="text-base font-black text-slate-700 uppercase font-mono tracking-wider">Panel de Alertas Inactivo</h3>
-          <p class="text-xs font-bold text-slate-600 max-w-sm mx-auto">
-            Las interacciones aparecerán clasificadas en orden jerárquico e iluminadas tras presionar <strong>EVALUAR INTERACCIÓN</strong>.
-          </p>
+      <!-- COLUMNA DERECHA: TARJETAS DE ALERTAS -->
+      <div class="lg:col-span-2">
+        <div id="alertsContainer" class="space-y-4">
+          <div class="bg-white border-2 border-slate-200 rounded-2xl p-8 text-center space-y-3 shadow-sm">
+            <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto border border-slate-300">
+              <i data-lucide="shield-check" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-base font-black text-slate-800">Sistema Listo para Evaluación</h3>
+            <p class="text-xs font-bold text-slate-500 max-w-sm mx-auto">
+              Ingrese los medicamentos deseados (se consultará OpenFDA en tiempo real) y presione <strong>"Evaluar Interacción"</strong>.
+            </p>
+          </div>
         </div>
       </div>
 
     </div>
 
-  </main>
+  </div>
 
-  <footer class="border-t-2 border-slate-300 bg-white mt-12 py-6">
-    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-slate-700 font-mono">
-      <p>© 2026 DrugsClinical. Evidencia Clínica y Farmacovigilancia 7D.</p>
-      <div class="flex space-x-6">
-        <a href="#" class="hover:text-teal-700 transition">Guías Clínicas</a>
-        <a href="#" class="hover:text-teal-700 transition">API Integración</a>
-      </div>
-    </div>
-  </footer>
+  <!-- SCRIPT CON INTEGRACIÓN API OPENFDA -->
+  <script>
+    // ======================================================
+    // BASE DE DATOS LOCAL PARA VEHÍCULOS / CONDICIONES Y REGLAS
+    // ======================================================
+    const LOCAL_DATABASE = [
+      { 
+        id: 'OMEPRAZOL', 
+        name: 'Omeprazol', 
+        genericName: 'omeprazole',
+        category: 'fármaco', 
+        detail: 'Inhibidor de la bomba de protones',
+        aliases: ['omeprazol', 'omeprazole', 'losec']
+      },
+      { 
+        id: 'GLUCOSA_5', 
+        name: 'Solución Glucosa 5% / Dextrosa 5%', 
+        genericName: 'dextrose',
+        category: 'vehículo', 
+        detail: 'Vehículo parenteral ácido (pH 3.5 - 6.5)',
+        aliases: ['solucion glucosa 5%', 'glucosa 5%', 'solucion dextrosa 5%', 'dextrosa 5%', 'dextrosa', 'glucosa', 'sg 5%', 'sd 5%']
+      },
+      { 
+        id: 'WARFARINA', 
+        name: 'Warfarina', 
+        genericName: 'warfarin',
+        category: 'fármaco', 
+        detail: 'Anticoagulante oral',
+        aliases: ['warfarina', 'warfarin', 'coumadin']
+      },
+      { 
+        id: 'ASPIRINA', 
+        name: 'Aspirina', 
+        genericName: 'aspirin',
+        category: 'fármaco', 
+        detail: 'Antiagregante plaquetario',
+        aliases: ['aspirina', 'aspirin', 'aas', 'acido acetilsalicilico']
+      },
+      { 
+        id: 'SIMVASTATINA', 
+        name: 'Simvastatina', 
+        genericName: 'simvastatin',
+        category: 'fármaco', 
+        detail: 'Hipolipemiante',
+        aliases: ['simvastatina', 'simvastatin', 'zocor']
+      },
+      { 
+        id: 'JUGO_TORONJA', 
+        name: 'Jugo de Toronja', 
+        genericName: 'grapefruit',
+        category: 'nutrimento', 
+        detail: 'Inhibidor CYP3A4',
+        aliases: ['jugo de toronja', 'toronja', 'grapefruit']
+      }
+    ];
 
-  <script src="app.js"></script>
+    // MATRIZ DE REGLAS DE INTERACCIÓN
+    const INTERACTION_RULES = [
+      {
+        priority: 1,
+        pairKeys: ['warfarin', 'aspirin'],
+        vias: ['iv', 'oral'],
+        severity: 'danger',
+        title: 'Warfarina + Aspirina',
+        category: 'Interacción Medicamento - Medicamento',
+        badge: 'Riesgo Alto de Sangrado',
+        mechanism: 'Sinergismo farmacodinámico sobre la cascada de coagulación y agregación plaquetaria.',
+        consequence: 'Elevado riesgo de hemorragia gastrointestinal o sistémica grave.',
+        action: 'Evaluar necesidad estricta de anticoagulación doble. Considerar IBP de soporte.'
+      },
+      {
+        priority: 2,
+        pairKeys: ['omeprazole', 'dextrose'],
+        vias: ['iv'], // Solo IV
+        severity: 'danger',
+        title: 'Omeprazol IV + Solución Dextrosa 5% / Glucosa 5%',
+        category: 'Interacción Medicamento - Vehículo Parenteral',
+        badge: 'Degradación Ácida Rápida',
+        mechanism: 'El omeprazol es lábil en medio ácido. La Solución Dextrosa/Glucosa al 5% posee un pH ácido (3.5 - 6.5) que degrada el principio activo.',
+        consequence: 'Pérdida rápida de estabilidad, cambio de coloración/precipitación y pérdida de eficacia en infusiones > 2 horas.',
+        action: 'Reconstituir y diluir en Solución Fisiológica 0.9% (estable hasta 12h) o administrar en infusión inmediata (< 2 horas).'
+      },
+      {
+        priority: 2,
+        pairKeys: ['simvastatin', 'grapefruit'],
+        vias: ['oral'],
+        severity: 'danger',
+        title: 'Simvastatina + Jugo de Toronja',
+        category: 'Interacción Medicamento - Nutrimento',
+        badge: 'Toxicidad Muscular',
+        mechanism: 'El jugo de toronja inhibe la enzima CYP3A4 del epitelio intestinal.',
+        consequence: 'Incremento drástico de la biodisponibilidad y riesgo de rabdomiólisis.',
+        action: 'Evitar consumo simultáneo de jugo de toronja.'
+      }
+    ];
+
+    // ESTADOS GLOBALES
+    let currentAmbito = 'ambulatorio';
+    let currentVia = 'iv';
+    let activeSelectedItems = [];
+    let searchDebounceTimer = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupSearchAutocomplete();
+      renderActivePills();
+      if (window.lucide) lucide.createIcons();
+    });
+
+    function setViaAdministracion(via) {
+      currentVia = via;
+      document.getElementById('btnViaIV').className = via === 'iv' 
+        ? "px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 bg-teal-800 text-white shadow-sm"
+        : "px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900";
+
+      document.getElementById('btnViaOral').className = via === 'oral' 
+        ? "px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 bg-teal-800 text-white shadow-sm"
+        : "px-4 py-1.5 rounded-md text-xs font-black transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900";
+
+      evaluateInteractions();
+    }
+
+    function setAmbito(ambito) {
+      currentAmbito = ambito;
+      const btnAmb = document.getElementById('btnAmbulatorio');
+      const btnHosp = document.getElementById('btnHospitalario');
+      const hospModule = document.getElementById('hospitalModule');
+
+      if (ambito === 'ambulatorio') {
+        btnAmb.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-teal-800 shadow border border-slate-300";
+        btnHosp.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900";
+        hospModule.classList.add('opacity-30', 'pointer-events-none');
+      } else {
+        btnHosp.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 bg-white text-teal-800 shadow border border-slate-300";
+        btnAmb.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 text-slate-700 hover:text-slate-900";
+        hospModule.classList.remove('opacity-30', 'pointer-events-none');
+      }
+
+      evaluateInteractions();
+    }
+
+    // BUSCADOR AUTOCOMPLETADO (API OPENFDA + LOCAL)
+    function setupSearchAutocomplete() {
+      const input = document.getElementById('searchInput');
+      const results = document.getElementById('searchResults');
+      const loader = document.getElementById('apiLoader');
+
+      input.addEventListener('input', (e) => {
+        clearTimeout(searchDebounceTimer);
+        const query = e.target.value.toLowerCase().trim();
+
+        if (!query || query.length < 2) {
+          results.classList.add('hidden');
+          loader.classList.add('hidden');
+          return;
+        }
+
+        loader.classList.remove('hidden');
+
+        // Esperar 350ms después de teclear para consultar la API
+        searchDebounceTimer = setTimeout(async () => {
+          // 1. Buscar coincidencias en la base de datos local
+          const localMatches = LOCAL_DATABASE.filter(item => 
+            item.name.toLowerCase().includes(query) || 
+            item.aliases.some(alias => alias.includes(query))
+          );
+
+          // 2. Consulta en tiempo real a OpenFDA API
+          const fdaMatches = await fetchFromOpenFDA(query);
+          
+          loader.classList.add('hidden');
+          
+          // Combinar resultados sin duplicar
+          const combined = [...localMatches, ...fdaMatches];
+          renderSearchResults(combined);
+        }, 350);
+      });
+
+      document.getElementById('addBtn').addEventListener('click', () => {
+        const val = input.value.trim();
+        if (!val) return;
+
+        addItemToActiveList({
+          id: 'CUSTOM_' + Date.now(),
+          name: val,
+          genericName: val.toLowerCase(),
+          category: 'manual'
+        });
+
+        input.value = '';
+        results.classList.add('hidden');
+      });
+    }
+
+    // FUNCIÓN QUE CONSULTA LA API PÚBLICA DE OPENFDA
+    async function fetchFromOpenFDA(query) {
+      try {
+        const url = `https://api.fda.gov/drug/ndc.json?search=brand_name:${encodeURIComponent(query)}*+generic_name:${encodeURIComponent(query)}*&limit=6`;
+        const response = await fetch(url);
+        
+        if (!response.ok) return [];
+        const data = await response.json();
+
+        if (!data.results) return [];
+
+        return data.results.map(item => {
+          const generic = item.generic_name ? item.generic_name.split(',')[0].trim() : item.brand_name;
+          const routeText = item.route ? item.route.join(', ') : 'FÁRMACO';
+          
+          return {
+            id: item.product_ndc || generic.toLowerCase(),
+            name: item.brand_name ? `${item.brand_name} (${generic})` : generic,
+            genericName: generic.toLowerCase(),
+            category: 'OpenFDA',
+            detail: `Vía: ${routeText} | ${item.dosage_form_name || 'Producto FDA'}`
+          };
+        });
+      } catch (err) {
+        console.warn("No se pudo conectar a OpenFDA:", err);
+        return [];
+      }
+    }
+
+    function renderSearchResults(matches) {
+      const container = document.getElementById('searchResults');
+      container.innerHTML = '';
+
+      if (matches.length === 0) {
+        container.innerHTML = `<div class="p-3 text-xs font-bold text-slate-500">No se encontraron productos registrados en OpenFDA.</div>`;
+      } else {
+        matches.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'p-3 hover:bg-teal-50 cursor-pointer border-b border-slate-100 flex items-center justify-between text-xs font-bold text-slate-900 transition';
+          div.innerHTML = `
+            <div>
+              <span class="block font-black text-slate-900">${item.name}</span>
+              <span class="text-[11px] font-semibold text-slate-500">${item.detail}</span>
+            </div>
+            <span class="text-[10px] ${item.category === 'OpenFDA' ? 'bg-sky-100 text-sky-800 border-sky-300' : 'bg-slate-100 text-slate-700 border-slate-200'} px-2 py-0.5 rounded font-mono uppercase font-bold border">${item.category}</span>
+          `;
+          div.onclick = () => {
+            addItemToActiveList(item);
+            document.getElementById('searchInput').value = '';
+            container.classList.add('hidden');
+          };
+          container.appendChild(div);
+        });
+      }
+      container.classList.remove('hidden');
+    }
+
+    function addItemToActiveList(item) {
+      const exists = activeSelectedItems.some(i => i.id === item.id || i.name === item.name);
+      if (!exists) {
+        activeSelectedItems.push(item);
+        renderActivePills();
+      }
+    }
+
+    function renderActivePills() {
+      const container = document.getElementById('activePillsContainer');
+      container.innerHTML = '';
+
+      if (activeSelectedItems.length === 0) {
+        container.innerHTML = `<span class="text-xs font-bold text-slate-400 italic">Lista vacía. Busque en OpenFDA arriba.</span>`;
+        return;
+      }
+
+      activeSelectedItems.forEach((item, index) => {
+        const pill = document.createElement('span');
+        pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-100 border border-teal-300 text-teal-950 text-xs font-black shadow-sm';
+        pill.innerHTML = `
+          <span>${item.name}</span>
+          <button onclick="removePill(${index})" class="hover:text-red-700 text-teal-800 transition">
+            <i data-lucide="x" class="w-4 h-4 stroke-[2.5]"></i>
+          </button>
+        `;
+        container.appendChild(pill);
+      });
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function removePill(index) {
+      activeSelectedItems.splice(index, 1);
+      renderActivePills();
+    }
+
+    // EVALUACIÓN DE INTERACCIONES POR PRINCIPIOS ACTIVOS Y VÍA
+    function evaluateInteractions() {
+      let matchedRules = [];
+      const activeGenerics = activeSelectedItems.map(item => item.genericName || item.name.toLowerCase());
+
+      INTERACTION_RULES.forEach(rule => {
+        // Verificar si los principios activos están contenidos en los textos seleccionados
+        const matchesPair = rule.pairKeys.every(key => 
+          activeGenerics.some(gen => gen.includes(key))
+        );
+        const matchesVia = rule.vias.includes(currentVia);
+
+        if (matchesPair && matchesVia) {
+          matchedRules.push(rule);
+        }
+      });
+
+      matchedRules.sort((a, b) => a.priority - b.priority);
+      renderAlertsUI(matchedRules);
+      updateCountersUI(matchedRules);
+    }
+
+    function renderAlertsUI(rules) {
+      const container = document.getElementById('alertsContainer');
+      const statusBadge = document.getElementById('statusBadge');
+      container.innerHTML = '';
+
+      if (rules.length === 0) {
+        statusBadge.className = "text-[10px] px-2 py-0.5 rounded bg-emerald-200 text-emerald-950 border border-emerald-400 font-black uppercase";
+        statusBadge.textContent = "Evaluado: Seguro";
+
+        container.innerHTML = `
+          <div class="bg-white border-2 border-emerald-500 rounded-2xl p-8 text-center space-y-3 shadow-md">
+            <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto border-2 border-emerald-500">
+              <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-base font-black text-slate-900">Evaluación Finalizada: Sin Riesgos Detectados</h3>
+            <p class="text-xs font-bold text-slate-600 max-w-sm mx-auto">
+              Los elementos evaluados para la vía <span class="uppercase font-black text-teal-800">${currentVia}</span> no presentan contraindicaciones dentro del motor clínico.
+            </p>
+          </div>
+        `;
+      } else {
+        statusBadge.className = "text-[10px] px-2 py-0.5 rounded bg-red-200 text-red-950 border border-red-400 font-black uppercase animate-pulse";
+        statusBadge.textContent = "Alertas Activas";
+
+        rules.forEach(rule => {
+          const isDanger = rule.severity === 'danger';
+          const card = document.createElement('article');
+          
+          card.className = `bg-white border-2 ${
+            isDanger ? 'border-red-600 shadow-xl shadow-red-600/10' : 'border-amber-500 shadow-lg'
+          } rounded-2xl p-5 space-y-4`;
+          
+          card.innerHTML = `
+            <div class="flex items-start justify-between border-b-2 border-slate-100 pb-3">
+              <div class="flex items-center gap-3">
+                <span class="p-2.5 rounded-xl ${isDanger ? 'bg-red-700 text-white' : 'bg-amber-600 text-white'} shadow-md">
+                  <i data-lucide="${isDanger ? 'alert-triangle' : 'shield-alert'}" class="w-6 h-6"></i>
+                </span>
+                <div>
+                  <span class="text-[11px] font-mono font-black uppercase text-slate-500 tracking-wider">${rule.category}</span>
+                  <h2 class="text-lg font-black text-slate-900">${rule.title}</h2>
+                </div>
+              </div>
+              <span class="px-3 py-1 rounded-md text-[10px] font-black font-mono ${
+                isDanger ? 'bg-red-100 text-red-950 border border-red-500' : 'bg-amber-100 text-amber-950 border border-amber-500'
+              } uppercase tracking-wide">
+                ${rule.badge}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <span class="text-slate-900 font-black block mb-1 font-mono uppercase text-[10px]">Mecanismo</span>
+                <p class="text-slate-800 font-bold leading-relaxed">${rule.mechanism}</p>
+              </div>
+              <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                <span class="text-slate-900 font-black block mb-1 font-mono uppercase text-[10px]">Consecuencia Clínica</span>
+                <p class="text-slate-800 font-bold leading-relaxed">${rule.consequence}</p>
+              </div>
+            </div>
+
+            <div class="p-3 bg-teal-50 border border-teal-300 rounded-xl flex items-start gap-2.5 text-xs">
+              <i data-lucide="info" class="w-5 h-5 text-teal-800 shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="text-teal-950 block font-black text-xs uppercase font-mono">Acción Sugerida:</strong>
+                <p class="text-slate-900 font-extrabold mt-0.5">${rule.action}</p>
+              </div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function updateCountersUI(rules) {
+      const highRisk = rules.filter(r => r.severity === 'danger').length;
+      const modRisk = rules.filter(r => r.severity === 'warning').length;
+      const safeCount = activeSelectedItems.length > 0 && (highRisk + modRisk === 0) ? activeSelectedItems.length : 0;
+
+      document.getElementById('highRiskCount').textContent = highRisk;
+      document.getElementById('modRiskCount').textContent = modRisk;
+      document.getElementById('safeCount').textContent = safeCount;
+    }
+  </script>
 </body>
 </html>
