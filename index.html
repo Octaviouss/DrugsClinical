@@ -82,7 +82,7 @@
             <input 
               type="text" 
               id="searchInput" 
-              placeholder="Escriba fármaco (ej. Omeprazol IV, Pantoprazol, Warfarina), vehículo o alimento..." 
+              placeholder="Escriba fármaco (ej. Omeprazol, Vitamina B12, Warfarina), vehículo o alimento..." 
               class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border-2 border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-teal-600 transition"
             >
             <div id="apiLoader" class="hidden absolute right-3 top-3">
@@ -206,8 +206,17 @@
   </div>
 
   <script>
-    // BASE DE DATOS LOCAL ENRIQUECIDA CON PRESENTACIONES EXPÍCITAS IV Y ORAL
+    // BASE DE DATOS LOCAL ENRIQUECIDA CON NUTRIMENTOS Y VITAMINAS
     const LOCAL_DATABASE = [
+      { 
+        id: 'VITAMINA_B12', 
+        name: 'Vitamina B12 (Cianocobalamina)', 
+        genericName: 'cyanocobalamin',
+        via: 'oral',
+        category: 'Vitamina / Suplemento', 
+        detail: 'Vía: ORAL / IM | Suplemento Vitamínico Complejo B',
+        aliases: ['vitamina b12', 'vitamina 12', 'vitamin 12', 'vitamin b12', 'b12', 'cianocobalamina', 'cyanocobalamin', 'bedoyecta']
+      },
       { 
         id: 'OMEPRAZOL_IV', 
         name: 'Omeprazol IV (40 mg Polvo Inyectable)', 
@@ -224,7 +233,7 @@
         via: 'oral',
         category: 'Oral', 
         detail: 'Vía: ORAL | Inhibidor de la bomba de protones',
-        aliases: ['omeprazol oral', 'omeprazol capsulas', 'losec']
+        aliases: ['omeprazol oral', 'omeprazol capsulas', 'losec', 'omeprazol']
       },
       { 
         id: 'PANTOPRAZOL_IV', 
@@ -306,6 +315,18 @@
         mechanism: 'El omeprazol es lábil en medio ácido. La Solución Glucosa/Dextrosa al 5% posee un pH ácido (3.5 - 6.5) que degrada el principio activo.',
         consequence: 'Pérdida rápida de estabilidad, cambio de coloración/precipitación y pérdida de eficacia.',
         action: 'Reconstituir y diluir preferentemente en Solución Fisiológica 0.9% (estable 12h) o administrar la infusión en < 2 horas.'
+      },
+      {
+        priority: 3,
+        pairKeys: ['omeprazole', 'cyanocobalamin'],
+        vias: ['oral', 'iv'], 
+        severity: 'warning',
+        title: 'Omeprazol + Vitamina B12 (Cianocobalamina)',
+        category: 'Interacción Farmacocinética / Disminución de Absorción',
+        badge: 'Riesgo de Malabsorción de Vitamina B12',
+        mechanism: 'La hipoclorhidria (reducción del ácido gástrico) inducida por el omeprazol impide la escisión y liberación de la Vitamina B12 de las proteínas, disminuyendo su absorción intestinal.',
+        consequence: 'Riesgo de deficiencia prolongada de Vitamina B12 (especialmente en tratamientos >2 años), pudiendo desencadenar anemia megaloblástica o neuropatía.',
+        action: 'En tratamientos crónicos con IBP, evaluar niveles séricos de Vitamina B12. Si se detecta deficiencia, considerar la administración de Vitamina B12 por vía parenteral (Intramuscular).'
       }
     ];
 
@@ -390,19 +411,14 @@
             item.aliases.some(alias => alias.includes(query))
           );
 
-          // Coincidencias OpenFDA
-          const fdaMatches = await fetchFromOpenFDA(query);
+          // Coincidencias OpenFDA (Manejo para Vitaminas / Fármacos)
+          const searchTermForFDA = query.replace(/vitamin\s*12|vitamina\s*12|vitamina\s*b12|b12/gi, 'cyanocobalamin');
+          const fdaMatches = await fetchFromOpenFDA(searchTermForFDA);
+          
           loader.classList.add('hidden');
           
-          // ORDENAR RESULTADOS: Poner en primer lugar las presentaciones que coinciden con currentVia
-          const combined = [...localMatches, ...fdaMatches].sort((a, b) => {
-            const aMatchesVia = (a.via === currentVia) || (currentVia === 'iv' && a.detail && a.detail.includes('INTRAVENOSA'));
-            const bMatchesVia = (b.via === currentVia) || (currentVia === 'iv' && b.detail && b.detail.includes('INTRAVENOSA'));
-            if (aMatchesVia && !bMatchesVia) return -1;
-            if (!aMatchesVia && bMatchesVia) return 1;
-            return 0;
-          });
-
+          // ORDENAR RESULTADOS: Prioridad total a coincidencias locales directas
+          const combined = [...localMatches, ...fdaMatches];
           renderSearchResults(combined);
         }, 300);
       });
@@ -425,7 +441,8 @@
 
     async function fetchFromOpenFDA(query) {
       try {
-        const url = `https://api.fda.gov/drug/ndc.json?search=brand_name:${encodeURIComponent(query)}*+generic_name:${encodeURIComponent(query)}*&limit=6`;
+        const cleanQuery = encodeURIComponent(query);
+        const url = `https://api.fda.gov/drug/ndc.json?search=generic_name:${cleanQuery}*+brand_name:${cleanQuery}*&limit=5`;
         const response = await fetch(url);
         if (!response.ok) return [];
         const data = await response.json();
@@ -454,22 +471,19 @@
       container.innerHTML = '';
 
       if (matches.length === 0) {
-        container.innerHTML = `<div class="p-3 text-xs font-bold text-slate-500">Sin resultados.</div>`;
+        container.innerHTML = `<div class="p-3 text-xs font-bold text-slate-500">Sin resultados en catálogo. Presione "+ Agregar" para añadir manualmente.</div>`;
       } else {
         matches.forEach(item => {
           const isIV = item.via === 'iv' || (item.detail && item.detail.includes('INTRAVENOSA'));
-          const isSelectedVia = (currentVia === 'iv' && isIV) || (currentVia === 'oral' && !isIV);
 
           const div = document.createElement('div');
-          div.className = `p-3 hover:bg-teal-50 cursor-pointer border-b border-slate-100 flex items-center justify-between text-xs font-bold transition ${
-            isSelectedVia ? 'bg-teal-50/40' : 'bg-white'
-          }`;
+          div.className = `p-3 hover:bg-teal-50 cursor-pointer border-b border-slate-100 flex items-center justify-between text-xs font-bold transition bg-white`;
           
           div.innerHTML = `
             <div>
               <div class="flex items-center gap-2">
                 <span class="font-black text-slate-900">${item.name}</span>
-                ${isIV ? '<span class="bg-teal-800 text-white text-[9px] px-1.5 py-0.2 rounded font-mono font-black">IV INYECTABLE</span>' : '<span class="bg-slate-200 text-slate-700 text-[9px] px-1.5 py-0.2 rounded font-mono font-bold">ORAL</span>'}
+                ${isIV ? '<span class="bg-teal-800 text-white text-[9px] px-1.5 py-0.2 rounded font-mono font-black">IV / PARENTERAL</span>' : '<span class="bg-slate-200 text-slate-700 text-[9px] px-1.5 py-0.2 rounded font-mono font-bold">ORAL / NUTRICIÓN</span>'}
               </div>
               <span class="text-[11px] font-semibold text-slate-500 block mt-0.5">${item.detail || ''}</span>
             </div>
@@ -534,9 +548,8 @@
         const matchesPair = rule.pairKeys.every(key => 
           activeGenerics.some(gen => gen.includes(key))
         );
-        const matchesVia = rule.vias.includes(currentVia);
 
-        if (matchesPair && matchesVia) {
+        if (matchesPair) {
           matchedRules.push(rule);
         }
       });
@@ -616,7 +629,7 @@
           </div>
         `;
       } else {
-        statusBadge.className = "text-[10px] px-2 py-0.5 rounded bg-red-200 text-red-950 border border-red-400 font-black uppercase animate-pulse";
+        statusBadge.className = "text-[10px] px-2 py-0.5 rounded bg-amber-200 text-amber-950 border border-amber-400 font-black uppercase animate-pulse";
         statusBadge.textContent = "Alertas Activas";
 
         rules.forEach(rule => {
